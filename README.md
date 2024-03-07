@@ -1,29 +1,28 @@
-# Aspect WASM Instrument
 
-This is a simple lib powered by `wasm-instrument` from Parity to instrument Artela Aspect WebAssembly (WASM) files to add gas metering and corresponding validation.
+# Aspect WASM Instrumentation Library
 
-## Supported platforms
+The Aspect WASM Instrumentation Library, utilizing `wasm-instrument` from Parity, is designed to instrument Artela Aspect WebAssembly (WASM) files. It seamlessly adds gas metering functionality and ensures corresponding validation, enhancing the execution efficiency and reliability of your WebAssembly applications.
 
-Currently, we provide support for the following platforms:
+## Supported Platforms
 
-- Linux: Arm64, x86_64
-- MacOS: Arm64, x86_64
-- Windows: x86_64
+The library is currently compatible with multiple operating systems across different architectures:
 
-## How it works
+- **Linux**: Arm64, x86_64
+- **MacOS**: Arm64, x86_64
+- **Windows**: x86_64
 
-The lib will parse the given WASM file and inject the gas counter as a global variable and the gas metering code into each metered code section. The gas metering code will be added to the beginning of the section body.
+## Functionality
 
-This lib will also export the gas counter and the start section of the WASM bytecode.
+This library meticulously parses a given WASM file, injecting a gas counter as a global variable. Additionally, it integrates gas metering code into each designated code section, positioning it at the outset of the section body.
 
-The gas counter is exported as `__gas_counter__` and the start section is exported as `__aspect_start__`.
+Furthermore, the library facilitates the export of both the gas counter and the start section of the WASM bytecode. These are exported as `__gas_counter__` and `__aspect_start__`, respectively. It is crucial to initialize the gas counter prior to executing the start section to avoid execution failures.
 
-Make sure you initialize the gas counter before running start section, otherwise your execution will fail.
+### Before and After Instrumentation
 
-The code before wasm instrument is like:
+- **Original WASM Code Snippet:**
 
 ```bash
-# original wasm code
+# Original wasm code
 (func (;67;) (type 1) (param i32) (result i32)
     local.get 0
     local.get 0
@@ -34,15 +33,16 @@ The code before wasm instrument is like:
     memory.grow
 )
 ```
-The code after wasm instrument is like: 
+
+- **Post-Instrumentation Code Snippet:**
 
 ```bash
 (func (;67;) (type 1) (param i32) (result i32)
-    # How much gas to consume for the following section
+    # Gas consumption for the section
     i64.const 11170
-    # Consume gas
+    # Consuming gas
     call 30
-    # execute the original code
+    # Executing original code
     local.get 0
     local.get 0
     i64.extend_i32_u
@@ -52,12 +52,12 @@ The code after wasm instrument is like:
     memory.grow
 )
 
-# The gas metering code
+# Gas metering logic
 (func (;30;) (type 9) (param i64)
     global.get 5
     local.get 0
     i64.ge_u
-    if ;; label = @1
+    if
       global.get 5
       local.get 0
       i64.sub
@@ -69,45 +69,50 @@ The code after wasm instrument is like:
     end
 )
 
-# global gas counter
+# Global gas counter
 (global (;5;) (mut i64) i64.const 0)
-# exported start section
+# Exported start section
 (export "__aspect_start__" (func $~start))
-# alias for gas counter
+# Gas counter alias
 (export "__gas_counter__" (global 5))
 ```
 
-## How to build
+## Building the Library
 
-You can execute the following command to build for the current platform:
+To compile for your current platform, run:
 
 ```bash
 make build
 ```
 
-Or you can build for all platforms (but make sure you have installed corresponding cross-compilers):
+For compiling across all supported platforms, ensure the respective cross-compilers are installed:
 
-```bash 
+```bash
 make all
 ```
 
-Or just for specific platform, for example:
+For a specific platform build, such as Darwin Arm64, execute:
 
 ```bash
 make darwin-aarch64
 ```
 
-The build artifact will the generated in the `target/{platform}/release` directory (for current platform, it will be located at `target/release` directory).
+Build artifacts are located in `target/{platform}/release` directory, with a dedicated directory `target/release` for the current platform build.
 
-The generated artifact will provide three libs for you, pick the one that is suitable for your project:
-- Static library: `libaspect_wasm_instrument.a`
-- Dynamic library: `libaspect_wasm_instrument.so` / `libaspect_wasm_instrument.dylib` / `libaspect_wasm_instrument.dll`
-- Rust Library: `aspect_wasm_instrument.rlib`
+### Available Libraries
 
-## Features not supported yet
+The build process generates three types of libraries to suit various project requirements:
 
-Due to the limitation of the `wasm-instrument` lib, the following features are not supported yet:
-- Bulk memory
+- **Static Library**: `libaspect_wasm_instrument.a`
+- **Dynamic Library**: `libaspect_wasm_instrument.so`, `libaspect_wasm_instrument.dylib`, `libaspect_wasm_instrument.dll`
+- **Rust Library**: `aspect_wasm_instrument.rlib`
+
+## Current Limitations
+
+Some features are not yet supported due to the constraints of the underlying `wasm-instrument` library, including but not limited to:
+
+- Bulk memory operations
 - Reference types
 - ...
 
+Stay tuned for future updates as we continue to enhance this library's capabilities and compatibility.
