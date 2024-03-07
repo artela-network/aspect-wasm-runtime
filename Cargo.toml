@@ -1,0 +1,19 @@
+[package]
+name = "aspect-wasm-instrument"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasm-instrument = { version = "0.4.0", features = ["std", "sign_ext"] }
+parity-wasm = { version = "0.45", features = ["std", "sign_ext"] }
+anyhow = "1.0"
+slog = { version = "2.7.0", features = [
+    "release_max_level_trace",
+    "max_level_trace",
+] }
+wasmprinter = "0.2.0"
+lazy_static = "1.4.0"
+
+[lib]
+name = "aspect_wasm_instrument"
+crate-type = ["cdylib", "staticlib", "rlib"]
