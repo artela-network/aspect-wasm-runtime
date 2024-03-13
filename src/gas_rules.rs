@@ -3,18 +3,9 @@ use std::num::NonZeroU32;
 use parity_wasm::elements::Instruction;
 use wasm_instrument::gas_metering::{MemoryGrowCost, Rules};
 
-pub const GAS_COST_STORE: u32 = 2263;
-pub const GAS_COST_LOAD: u32 = 1573;
-
 /// Using 10 gas = ~1ns for WASM instructions.
 const GAS_PER_SECOND: u64 = 10_000_000_000;
-
-/// Set max gas to 1000 seconds worth of gas per handler. The intent here is to have the determinism
-/// cutoff be very high, while still allowing more reasonable timer based cutoffs. Having a unit
-/// like 10 gas for ~1ns allows us to be granular in instructions which are aggregated into metered
-/// blocks via https://docs.rs/pwasm-utils/0.16.0/pwasm_utils/fn.inject_gas_counter.html But we can
-/// still charge very high numbers for other things.
-pub const CONST_MAX_GAS_PER_HANDLER: u64 = 1000 * GAS_PER_SECOND;
+pub const CONST_MAX_GAS: u64 = 1000 * GAS_PER_SECOND;
 
 pub struct GasRules;
 
@@ -25,56 +16,56 @@ impl Rules for GasRules {
             // These are taken from this post: https://github.com/paritytech/substrate/pull/7361#issue-506217103
             // from the table under the "Schedule" dropdown. Each decimal is multiplied by 10.
             // Note that those were calculated for wasi, not wasmtime, so they are likely very conservative.
-            I64Const(_) => 16,
-            I64Load(_, _) => GAS_COST_LOAD,
-            I64Store(_, _) => GAS_COST_STORE,
-            Select => 61,
-            Instruction::If(_) => 79,
-            Br(_) => 30,
-            BrIf(_) => 63,
-            BrTable(data) => 146 + data.table.len() as u32,
-            Call(_) => 951,
+            I64Const(_) => 2,
+            I64Load(_, _) => 2,
+            I64Store(_, _) => 4,
+            Select => 10,
+            If(_) => 10,
+            Br(_) => 10,
+            BrIf(_) => 10,
+            BrTable(data) => 15 + data.table.len() as u32,
+            Call(_) => 95,
             // TODO: To figure out the param cost we need to look up the function
-            CallIndirect(_, _) => 1995,
-            GetLocal(_) => 18,
-            SetLocal(_) => 21,
-            TeeLocal(_) => 21,
-            GetGlobal(_) => 66,
-            SetGlobal(_) => 107,
+            CallIndirect(_, _) => 200,
+            GetLocal(_) => 2,
+            SetLocal(_) => 2,
+            TeeLocal(_) => 2,
+            GetGlobal(_) => 2,
+            SetGlobal(_) => 2,
             CurrentMemory(_) => 23,
             GrowMemory(_) => 435000,
-            I64Clz => 23,
-            I64Ctz => 23,
-            I64Popcnt => 29,
-            I64Eqz => 24,
-            I64ExtendSI32 => 22,
-            I64ExtendUI32 => 22,
-            I32WrapI64 => 23,
-            I64Eq => 26,
-            I64Ne => 25,
-            I64LtS => 25,
-            I64LtU => 26,
-            I64GtS => 25,
-            I64GtU => 25,
-            I64LeS => 25,
-            I64LeU => 26,
-            I64GeS => 26,
-            I64GeU => 25,
-            I64Add => 25,
-            I64Sub => 26,
-            I64Mul => 25,
-            I64DivS => 82,
-            I64DivU => 72,
-            I64RemS => 81,
-            I64RemU => 73,
-            I64And => 25,
-            I64Or => 25,
-            I64Xor => 26,
-            I64Shl => 25,
-            I64ShrS => 26,
-            I64ShrU => 26,
-            I64Rotl => 25,
-            I64Rotr => 26,
+            I64Clz => 85,
+            I64Ctz => 85,
+            I64Popcnt => 108,
+            I64Eqz => 2,
+            I64ExtendSI32 => 2,
+            I64ExtendUI32 => 2,
+            I32WrapI64 => 2,
+            I64Eq => 2,
+            I64Ne => 2,
+            I64LtS => 2,
+            I64LtU => 2,
+            I64GtS => 2,
+            I64GtU => 2,
+            I64LeS => 2,
+            I64LeU => 2,
+            I64GeS => 2,
+            I64GeU => 2,
+            I64Add => 2,
+            I64Sub => 2,
+            I64Mul => 4,
+            I64DivS => 8,
+            I64DivU => 8,
+            I64RemS => 8,
+            I64RemU => 8,
+            I64And => 2,
+            I64Or => 2,
+            I64Xor => 2,
+            I64Shl => 4,
+            I64ShrS => 4,
+            I64ShrU => 4,
+            I64Rotl => 2,
+            I64Rotr => 2,
 
             // These are similar enough to something above so just referencing a similar
             // instruction
@@ -90,7 +81,7 @@ impl Rules for GasRules {
             | I64Load16S(_, _)
             | I64Load16U(_, _)
             | I64Load32S(_, _)
-            | I64Load32U(_, _) => GAS_COST_LOAD,
+            | I64Load32U(_, _) => 2,
 
             I32Store(_, _)
             | F32Store(_, _)
@@ -99,38 +90,38 @@ impl Rules for GasRules {
             | I32Store16(_, _)
             | I64Store8(_, _)
             | I64Store16(_, _)
-            | I64Store32(_, _) => GAS_COST_STORE,
+            | I64Store32(_, _) => 4,
 
-            I32Const(_) | F32Const(_) | F64Const(_) => 16,
-            I32Eqz => 26,
-            I32Eq => 26,
-            I32Ne => 25,
-            I32LtS => 25,
-            I32LtU => 26,
-            I32GtS => 25,
-            I32GtU => 25,
-            I32LeS => 25,
-            I32LeU => 26,
-            I32GeS => 26,
-            I32GeU => 25,
-            I32Add => 25,
-            I32Sub => 26,
-            I32Mul => 25,
-            I32DivS => 82,
-            I32DivU => 72,
-            I32RemS => 81,
-            I32RemU => 73,
-            I32And => 25,
-            I32Or => 25,
-            I32Xor => 26,
-            I32Shl => 25,
-            I32ShrS => 26,
-            I32ShrU => 26,
-            I32Rotl => 25,
-            I32Rotr => 26,
-            I32Clz => 23,
-            I32Popcnt => 29,
-            I32Ctz => 23,
+            I32Const(_) | F32Const(_) | F64Const(_) => 1,
+            I32Eqz => 1,
+            I32Eq => 1,
+            I32Ne => 1,
+            I32LtS => 1,
+            I32LtU => 1,
+            I32GtS => 1,
+            I32GtU => 1,
+            I32LeS => 1,
+            I32LeU => 1,
+            I32GeS => 1,
+            I32GeU => 1,
+            I32Add => 1,
+            I32Sub => 1,
+            I32Mul => 2,
+            I32DivS => 4,
+            I32DivU => 4,
+            I32RemS => 4,
+            I32RemU => 4,
+            I32And => 1,
+            I32Or => 1,
+            I32Xor => 1,
+            I32Shl => 2,
+            I32ShrS => 2,
+            I32ShrU => 2,
+            I32Rotl => 1,
+            I32Rotr => 1,
+            I32Clz => 47,
+            I32Popcnt => 54,
+            I32Ctz => 47,
 
             // Float weights not calculated by reference source material. Making up
             // some conservative values. The point here is not to be perfect but just
@@ -143,17 +134,17 @@ impl Rules for GasRules {
             | F64Trunc | F64Floor | F64Ceil | F64Neg | F64Abs | F64Nearest | F32Copysign
             | F32Max | F32Min | F32Mul | F32Sub | F32Add | F32Nearest | F32Trunc | F32Floor
             | F32Ceil | F32Neg | F32Abs | F32Eq | F32Ne | F32Lt | F32Gt | F32Le | F32Ge | F64Eq
-            | F64Ne | F64Lt | F64Gt | F64Le | F64Ge | I32ReinterpretF32 | I64ReinterpretF64 => 100,
-            F64Div | F64Sqrt | F32Div | F32Sqrt => 100,
+            | F64Ne | F64Lt | F64Gt | F64Le | F64Ge | I32ReinterpretF32 | I64ReinterpretF64 => 50,
+            F64Div | F64Sqrt | F32Div | F32Sqrt => 50,
 
             // More invented weights
-            Block(_) => 100,
-            Loop(_) => 100,
-            Else => 100,
-            End => 100,
-            Return => 100,
-            Drop => 100,
-            SignExt(_) => 100,
+            Block(_) => 10,
+            Loop(_) => 10,
+            Else => 10,
+            End => 10,
+            Return => 10,
+            Drop => 10,
+            SignExt(_) => 10,
             Nop => 1,
             Unreachable => 1,
         };
@@ -170,7 +161,7 @@ impl Rules for GasRules {
         // free pages because this is 32bit WASM.
         const MAX_PAGES: u64 = 12 * GIB / PAGE;
         let gas_per_page =
-            NonZeroU32::new((CONST_MAX_GAS_PER_HANDLER / MAX_PAGES).try_into().unwrap()).unwrap();
+            NonZeroU32::new((CONST_MAX_GAS / MAX_PAGES).try_into().unwrap()).unwrap();
 
         MemoryGrowCost::Linear(gas_per_page)
     }
