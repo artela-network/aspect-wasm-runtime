@@ -20,9 +20,9 @@ impl Rules for GasRules {
             Br(_) => 150,
             BrIf(_) => 150,
             BrTable(data) => 150 + (data.table.len() * 10) as u32,
-            Call(_) => 950,
+            Call(_) => 150,
             // TODO: To figure out the param cost we need to look up the function
-            CallIndirect(_, _) => 2000,
+            CallIndirect(_, _) => 200,
             GetLocal(_) => 40,
             SetLocal(_) => 80,
             TeeLocal(_) => 40,

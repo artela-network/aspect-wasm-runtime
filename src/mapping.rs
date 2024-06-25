@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_wasm_to_wat() {
-        let wasm_path = "testdata/runtime_test.wasm";
+        let wasm_path = "testdata/release.wasm";
         let wat_path = "output.wat";
         let injected_wasm_path = "output.wasm";
 
