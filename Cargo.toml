@@ -2,6 +2,8 @@
 name = "aspect-wasm-instrument"
 version = "0.1.0"
 edition = "2021"
+description = "A library for instrumenting WebAssembly binaries on Artela"
+license = "MIT"
 
 [dependencies]
 wasm-instrument = { version = "0.4.0", features = ["std", "sign_ext"] }
