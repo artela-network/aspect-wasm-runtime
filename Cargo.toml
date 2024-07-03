@@ -1,5 +1,5 @@
 [package]
-name = "aspect-wasm-instrument"
+name = "aspect-wasm-runtime"
 version = "0.1.0"
 edition = "2021"
 description = "A library for instrumenting WebAssembly binaries on Artela"
@@ -15,7 +15,9 @@ slog = { version = "2.7.0", features = [
 ] }
 wasmprinter = "0.2.0"
 lazy_static = "1.4.0"
+wasmtime-c-api = { version = "20.0.0", package = "wasmtime-c-api-impl", features = ["wasi", "async", "cache", "parallel-compilation", "logging", "threads", "gc", "wat"] }
+wasmparser = "0.202.0"
 
 [lib]
-name = "aspect_wasm_instrument"
+name = "aspect_wasm_runtime"
 crate-type = ["cdylib", "staticlib", "rlib"]
