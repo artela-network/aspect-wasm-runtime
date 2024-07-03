@@ -74,6 +74,7 @@ dependencies = [
  "parity-wasm",
  "slog",
  "wasm-instrument",
+ "wasmparser 0.202.0",
  "wasmprinter 0.2.80",
  "wasmtime-c-api-impl",
 ]
