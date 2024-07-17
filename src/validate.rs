@@ -1,4 +1,4 @@
-use wasmparser::{Validator, WasmFeatures};
+use wasmparser::{FuncValidatorAllocations, Parser, Payload, Validator, ValidPayload, WasmFeatures};
 use wasmtime_c_api::wasmtime_error_t;
 
 #[no_mangle]
@@ -35,7 +35,39 @@ fn validate(binary: &[u8]) -> anyhow::Result<()> {
         component_model_nested_names: false,
     });
 
-    validator.validate_all(binary)?;
+    let mut functions_to_validate = Vec::new();
+    let mut entry_exported = false;
+    for payload in Parser::new(0).parse_all(binary) {
+        match payload {
+            Ok(Payload::ExportSection(reader)) => {
+                for export_result in reader {
+                    let export = export_result?;
+                    if export.name == "__aspect_start__" && matches!(export.kind, wasmparser::ExternalKind::Func) {
+                        entry_exported = true;
+                    }
+                }
+            }
+            _ => {
+                match validator.payload(&payload?)? {
+                    ValidPayload::Func(a, b) => {
+                        functions_to_validate.push((a, b));
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    if !entry_exported {
+        return Err(anyhow::anyhow!("Entrypoint function not exported"));
+    }
+
+    let mut allocs = FuncValidatorAllocations::default();
+    for (func, body) in functions_to_validate {
+        let mut validator = func.into_validator(allocs);
+        validator.validate(&body)?;
+        allocs = validator.into_allocations();
+    }
 
     Ok(())
 }
