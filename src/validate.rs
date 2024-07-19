@@ -1,3 +1,4 @@
+use anyhow::bail;
 use wasmparser::{FuncValidatorAllocations, Parser, Payload, Validator, ValidPayload, WasmFeatures};
 use wasmtime_c_api::wasmtime_error_t;
 
@@ -47,6 +48,9 @@ fn validate(binary: &[u8]) -> anyhow::Result<()> {
                     }
                 }
             }
+            Ok(Payload::StartSection { .. }) => {
+                bail!("start section not allowed")
+            }
             _ => {
                 match validator.payload(&payload?)? {
                     ValidPayload::Func(a, b) => {
@@ -59,7 +63,7 @@ fn validate(binary: &[u8]) -> anyhow::Result<()> {
     }
 
     if !entry_exported {
-        return Err(anyhow::anyhow!("Entrypoint function not exported"));
+        bail!("aspect entrypoint not exported");
     }
 
     let mut allocs = FuncValidatorAllocations::default();
@@ -104,7 +108,7 @@ mod tests {
 
     #[test]
     fn test_validate_valid_wasm_bytes() {
-        let wasm_path = "testdata/runtime_test.wasm";
+        let wasm_path = "testdata/FloatAspect.wasm";
         let wasm_bytes = std::fs::read(wasm_path).expect("Unable to read the wasm file");
 
         validate(&wasm_bytes).expect("Failed to validate the wasm file");
